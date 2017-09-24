@@ -22,6 +22,7 @@
 #define ECHO_PORT 9999
 #define BUF_SIZE 4096
 
+
 int close_socket(int sock)
 {
         if (close(sock))
@@ -65,7 +66,7 @@ int main(int argc, char* argv[])
         }
 
 
-        if (listen(sock, 5))
+        if (listen(sock, 2048)) // handout requires at least 1024 connections.
         {
                 close_socket(sock);
                 fprintf(stderr, "Error listening on socket.\n");
@@ -92,15 +93,17 @@ int main(int argc, char* argv[])
                 for (i = 0; i <= fdmax; i++) {
                         if (FD_ISSET(i, &read_fds)) { // there is one connection in pool
                                 if (i == sock) {
-                                        cli_size = sizeof(remoteaddr);
+                                        cli_size = sizeof remoteaddr;
                                         // accept the connection
                                         if ((newfd = accept(sock, (struct sockaddr *)&remoteaddr, &cli_size)) == -1) {
                                                 fprintf(stderr, "Error accepting connection.\n");
                                         } else {
                                                 FD_SET(newfd, &master); // add to &master
                                                 if (newfd > fdmax) {
+                                                        fprintf(stderr, "New fdmax is %d.\n", fdmax);
                                                         fdmax = newfd; // change the max number
                                                 }
+                                                printf("selectserver: new connection on socket %d\n", newfd);
                                         }
                                 } else {
                                         readret = 0;
@@ -124,9 +127,12 @@ int main(int argc, char* argv[])
                                                         fprintf(stderr, "Error reading from client socket.\n");
                                                         return EXIT_FAILURE;
                                                 }
-                                                if (close(i)) {
+
+                                                if (close_socket(i)) {
                                                         fprintf(stderr, "Error closing client socket.\n");
                                                         return EXIT_FAILURE;
+                                                } else {
+                                                        fprintf(stderr, "Socket %d closed.\n", i);
                                                 }
                                                 // remove processed data from &master
                                                 FD_CLR(i, &master);

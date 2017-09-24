@@ -1,23 +1,24 @@
-################################################################################
-# Makefile                                                                     #
-#                                                                              #
-# Description: This file contains the make rules for Recitation 1.             #
-#                                                                              #
-# Authors: Athula Balachandran <abalacha@cs.cmu.edu>,                          #
-#          Wolf Richter <wolf@cs.cmu.edu>                                      #
-#                                                                              #
-################################################################################
+CC=gcc
+CFLAGS=-I.
+DEPS = parse.h y.tab.h
+OBJ = y.tab.o lex.yy.o parse.o echo_server.o
+FLAGS = -g -Wall
 
-default: echo_server echo_client echo_answer
+default:all
 
-echo_server:
-	@gcc echo_server.c -o echo_server -Wall -Werror
+all: echo_server
 
-echo_answer:
-		@gcc echo_answer.c -o echo_answer -Wall # -Werror
+lex.yy.c: lexer.l
+	flex $^
 
-echo_client:
-	@gcc echo_client.c -o echo_client -Wall -Werror
+y.tab.c: parser.y
+	yacc -d $^
+
+%.o: %.c $(DEPS)
+	$(CC) $(FLAGS) -c -o $@ $< $(CFLAGS)
+
+echo_server: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
-	@rm echo_server echo_client
+	rm -f *~ *.o example echo_server echo_client lex.yy.c y.tab.c y.tab.h
